@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+
+  <div id="root">
+    <form @submit.prevent="registerUser()">
+      <div>
+        <label for="username">Usuario</label>
+        <input type="username" id="username" v-model="username">
+      </div>
+      <div>
+        <label for="email">E-mail</label>
+        <input type="email" id="email" v-model="email">
+      </div>
+      <div>
+        <label for="password">Senha</label>
+        <input type="password" id="password" v-model="password">
+      </div>
+      <button type="submit">Cadastrar</button>
+    </form>
+
+    <ul>
+      <li v-for="user in users">{{ user.username }} - {{ user.email }}</li>
+    </ul>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/7.0.0/polyfill.min.js"></script>
+  <script src="https://unpkg.com/@adonisjs/websocket-client"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script type="text/javascript">
+    const app = new Vue({
+      el: '#root',
+      data: {
+        users: [],
+        username: '',
+        email:'',
+        password: '',
+      },
+      methods: {
+        async registerUser() {
+          const { username, email, password } = this;
+
+          await axios.post('http://127.0.0.1:3333/users', {
+            username,
+            email,
+            password,
+          });
+
+          this.username = '';
+          this.email = '';
+          this.password = '';
+        },
+        async getUsers() {
+          const { data: users } = await axios.get('http://127.0.0.1:3333/users');
+          this.users = users;
+        }
+      },
+      created() {
+        this.getUsers();
+
+        // websocket
+        const ws = adonis.Ws('ws://localhost:3333').connect();
+        const chat = ws.subscribe('chat')
+
+        chat.on('receivedUser', (user) => {
+          this.users = [ user, ...this.users ];
+        });
+      }
+    });
+  </script>
+</body>
+</html>
